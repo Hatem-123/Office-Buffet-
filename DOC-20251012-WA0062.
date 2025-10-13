@@ -1,0 +1,99 @@
+document.addEventListener('DOMContentLoaded', () => {
+    let selectedDrink = '';
+    let addons = [];
+
+    const drinkButtons = document.querySelectorAll('.drink-btn');
+    const addonMilkBtn = document.getElementById('addMilk');
+    const addonIceBtn = document.getElementById('addIce');
+    const submitBtn = document.getElementById('submitOrder');
+    const notesInput = document.getElementById('notes');
+    const selectedDrinkDisplay = document.getElementById('selectedDrink');
+    const messageElement = document.getElementById('message');
+
+    // --- وظيفة اختيار المشروب ---
+    drinkButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // تحديث حالة الأزرار
+            drinkButtons.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            
+            // تحديث المشروب المختار
+            selectedDrink = btn.getAttribute('data-drink');
+            selectedDrinkDisplay.textContent = selectedDrink;
+            
+            // إعادة ضبط الإضافات (لأنها قد لا تنطبق على المشروب الجديد)
+            addons = [];
+            addonMilkBtn.classList.remove('active');
+            addonIceBtn.classList.remove('active');
+        });
+    });
+
+    // --- وظيفة اختيار الإضافات ---
+    function toggleAddon(btn, addonValue) {
+        if (btn.classList.contains('active')) {
+            btn.classList.remove('active');
+            addons = addons.filter(item => item !== addonValue); 
+        } else {
+            btn.classList.add('active');
+            addons.push(addonValue); 
+        }
+    }
+
+    addonMilkBtn.addEventListener('click', () => {
+        toggleAddon(addonMilkBtn, addonMilkBtn.getAttribute('data-addon'));
+    });
+
+    addonIceBtn.addEventListener('click', () => {
+        toggleAddon(addonIceBtn, addonIceBtn.getAttribute('data-addon'));
+    });
+
+    // --- وظيفة إرسال الطلب الرئيسية ---
+    submitBtn.addEventListener('click', () => {
+        const name = document.getElementById('employeeName').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const notes = notesInput.value.trim();
+        
+        // التحقق من البيانات الأساسية
+        if (!name || !location || !selectedDrink) {
+            alert('من فضلك، تأكد من إدخال الاسم ورقم المكتب واختيار المشروب.');
+            return;
+        }
+
+        // تجميع تفاصيل الطلب لإرسالها
+        const orderData = {
+            name: name,
+            location: location,
+            drink: selectedDrink,
+            addons: addons.join(', ') || 'لا يوجد',
+            notes: notes || 'لا يوجد ملاحظات'
+        };
+
+        // ----------------------------------------------------------------
+        // **ملاحظة هامة: لتشغيل هذا على الإنترنت، يجب ربطه بـ Google Form / Backend**
+        // ----------------------------------------------------------------
+        
+        // **حالياً: نستخدم طباعة في ال Console كمحاكاة للإرسال**
+        console.log("تم تجميع الطلب بنجاح. تفاصيل الطلب هي:", orderData);
+        
+        // **إذا كنت تستخدم Google Form، الكود هنا سيحتوي على دالة `fetch`**
+
+        // عرض رسالة التأكيد
+        messageElement.textContent = `تم إرسال طلبك بنجاح. سنقوم بتحضيره وتسليمه إلى ${location}.`;
+        messageElement.classList.remove('hidden');
+        
+        // مسح الحقول لإعداد طلب جديد
+        setTimeout(() => {
+            messageElement.classList.add('hidden');
+            document.getElementById('employeeName').value = '';
+            document.getElementById('location').value = '';
+            notesInput.value = '';
+            selectedDrink = '';
+            selectedDrinkDisplay.textContent = 'لم يتم الاختيار';
+            // إعادة ضبط الأزرار
+            addons = [];
+            drinkButtons.forEach(b => b.classList.remove('selected'));
+            addonMilkBtn.classList.remove('active');
+            addonIceBtn.classList.remove('active');
+        }, 4000);
+    });
+});

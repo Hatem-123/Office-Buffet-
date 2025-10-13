@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خدمة طلب المشروبات للموظفين</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <i class="fas fa-mug-hot"></i>
+            <h1>طلب المشروبات للموظفين</h1>
+        </header>
+        
+        <section class="user-info card">
+            <h2><i class="fas fa-user-tag"></i> بيانات الطالب:</h2>
+            <input type="text" id="employeeName" placeholder="اسم الموظف" required>
+            <input type="text" id="location" placeholder="رقم المكتب / القسم" required>
+        </section>
+
+        <section class="menu card">
+            <h2><i class="fas fa-coffee"></i> اختر مشروبك الأساسي:</h2>
+            <div class="menu-items">
+                <button class="drink-btn" data-drink="شاي">شاي</button>
+                <button class="drink-btn" data-drink="شاي بلبن">شاي بلبن</button>
+                <button class="drink-btn" data-drink="قهوة تركي">قهوة تركي</button>
+                <button class="drink-btn" data-drink="قهوة فرنساوي">قهوة فرنساوي</button>
+                <button class="drink-btn" data-drink="كابتشينو">كابتشينو</button>
+                <button class="drink-btn" data-drink="نسكافيه">نسكافيه</button>
+                <button class="drink-btn" data-drink="شاي أخضر">شاي أخضر</button>
+                <button class="drink-btn" data-drink="ينسون">ينسون</button>
+                <button class="drink-btn" data-drink="نعناع">نعناع</button>
+                <button class="drink-btn" data-drink="كركديه">كركديه</button>
+            </div>
+        </section>
+
+        <section class="customization card">
+            <h2><i class="fas fa-sliders-h"></i> تخصيص الطلب:</h2>
+            <div class="current-order">
+                <p>المشروب الحالي المختار: <span id="selectedDrink">لم يتم الاختيار</span></p>
+                
+                <div class="addons">
+                    <button id="addMilk" class="addon-btn" data-addon="لبن إضافي">
+                        <i class="fas fa-tint"></i> إضافة لبن
+                    </button>
+                    <button id="addIce" class="addon-btn" data-addon="ثلج">
+                        <i class="fas fa-ice-cream"></i> إضافة ثلج
+                    </button>
+                </div>
+
+                <textarea id="notes" placeholder="ملاحظات إضافية (مثل: سكر خفيف، بدون سكر، إلخ)"></textarea>
+            </div>
+        </section>
+
+        <button id="submitOrder" class="submit-btn">
+            <i class="fas fa-paper-plane"></i> إرسال الطلب الآن
+        </button>
+        
+        <p id="message" class="hidden success-message"></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
