@@ -1,0 +1,218 @@
+--><!doctype html>
+
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>بوفيه المكتب - طلبات</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial;direction:rtl;padding:16px;max-width:900px;margin:0 auto}
+    header{display:flex;justify-content:space-between;align-items:center}
+    h1{margin:.2rem 0}
+    .card{border-radius:12px;padding:12px;margin:10px 0;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+    label{display:block;margin-top:8px}
+    input,select,textarea,button{width:100%;padding:8px;margin-top:6px;border-radius:8px;border:1px solid #ddd}
+    .row{display:flex;gap:8px}
+    .row > *{flex:1}
+    .small{width:120px}
+    .admin-only{background:#f7f7f9;padding:8px;border-radius:8px}
+    .orders{max-height:60vh;overflow:auto}
+    .order{padding:8px;border-radius:8px;margin:8px 0;border:1px solid #eee}
+    .status{font-weight:600}
+    .btn-inline{display:inline-block;padding:6px 8px;border-radius:8px;border:none;cursor:pointer}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>بوفيه المكتب</h1>
+      <div>اختر مشروبك وسجّل الطلب بسرعة</div>
+    </div>
+    <div>
+      <button id="open-admin">لوحة المسؤول</button>
+    </div>
+  </header>  <section class="card" id="order-form">
+    <h2>طلب جديد</h2>
+    <label>اسم الموظف
+      <input id="name" placeholder="اكتب اسمك (مهم)" />
+    </label><label>المشروب
+  <select id="drink">
+    <option value="قهوة">قهوة</option>
+    <option value="قهوة سادة">قهوة سادة</option>
+    <option value="قهوة زياده">قهوة زيادة</option>
+    <option value="شاي">شاي</option>
+    <option value="نسكافيه">نسكافيه</option>
+  </select>
+</label>
+
+<div class="row">
+  <div>
+    <label>التحلية
+      <select id="sugar">
+        <option value="عادي">عادي</option>
+        <option value="نص">نص</option>
+        <option value="بدون">بدون</option>
+      </select>
+    </label>
+  </div>
+  <div>
+    <label>الحجم
+      <select id="size">
+        <option value="صغير">صغير</option>
+        <option value="متوسط">متوسط</option>
+        <option value="كبير">كبير</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<label>ملاحظات (مثلاً: فاتح / غامق)
+  <textarea id="notes" rows="2" placeholder="ملاحظات إضافية"></textarea>
+</label>
+
+<div style="display:flex;gap:8px;margin-top:10px">
+  <button id="submit" class="btn-inline">أرسل الطلب</button>
+  <button id="clear" class="btn-inline">مسح الحقول</button>
+</div>
+
+<div id="message" style="margin-top:8px;color:green"></div>
+
+  </section>  <section class="card" id="admin-panel" style="display:none">
+    <h2>لوحة المسؤول</h2>
+    <div class="admin-only">
+      <div>طريقة دخول سريعة: اضغط زر "عرض المسؤول" ثم أدخل كلمة المرور المؤقتة.</div>
+      <button id="signout">خروج</button>
+    </div><h3>الطلبات الحالية</h3>
+<div class="orders" id="orders-list">جارٍ التحميل...</div>
+
+  </section>  <script type="module">
+    // ====== إعداد Firebase (استبدل القيم هنا) ======
+    // أنشئ مشروع Firebase، فعّل Firestore. ثم انسخ التكوين هنا.
+    const firebaseConfig = {
+      apiKey: "REPLACE_API_KEY",
+      authDomain: "REPLACE_AUTH_DOMAIN",
+      projectId: "REPLACE_PROJECT_ID",
+      storageBucket: "REPLACE_BUCKET",
+      messagingSenderId: "REPLACE_SENDER",
+      appId: "REPLACE_APP_ID"
+    };
+
+    // ====== تحميل مكتبات Firebase modular ======
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
+
+    const app = initializeApp(firebaseConfig)
+    const db = getFirestore(app)
+
+    // عناصر الواجهة
+    const nameEl = document.getElementById('name')
+    const drinkEl = document.getElementById('drink')
+    const sugarEl = document.getElementById('sugar')
+    const sizeEl = document.getElementById('size')
+    const notesEl = document.getElementById('notes')
+    const submitBtn = document.getElementById('submit')
+    const clearBtn = document.getElementById('clear')
+    const msg = document.getElementById('message')
+
+    const adminPanel = document.getElementById('admin-panel')
+    const orderForm = document.getElementById('order-form')
+    const ordersList = document.getElementById('orders-list')
+
+    // إرسال طلب
+    submitBtn.addEventListener('click', async () => {
+      const name = nameEl.value.trim() || 'مجهول'
+      const drink = drinkEl.value
+      const sugar = sugarEl.value
+      const size = sizeEl.value
+      const notes = notesEl.value.trim()
+
+      try {
+        await addDoc(collection(db, 'orders'), {
+          name, drink, sugar, size, notes,
+          status: 'قيد التحضير',
+          createdAt: serverTimestamp()
+        })
+        msg.textContent = 'تم إرسال الطلب ✅'
+        nameEl.value = ''
+        notesEl.value = ''
+        setTimeout(()=>msg.textContent='',2000)
+      } catch (e) {
+        console.error(e)
+        msg.style.color = 'red'
+        msg.textContent = 'فشل الإرسال. تأكد من إعداد Firebase.'
+      }
+    })
+
+    clearBtn.addEventListener('click', ()=>{
+      nameEl.value=''; notesEl.value='';
+    })
+
+    // لوحة المسؤول: طلب كلمة مرور بسيطة عرضية
+    document.getElementById('open-admin').addEventListener('click', async ()=>{
+      const pass = prompt('ادخل كلمة مرور المسؤول المؤقتة:')
+      // كلمة بسيطة لتجنب إظهار لوحة لأي زائر. غيّرها لو حابب.
+      if (pass === 'admin123') {
+        orderForm.style.display = 'none'
+        adminPanel.style.display = 'block'
+        startAdminListener()
+      } else alert('كلمة مرور خاطئة')
+    })
+
+    document.getElementById('signout').addEventListener('click', ()=>{
+      adminPanel.style.display='none'; orderForm.style.display='block';
+    })
+
+    // استمع للطلبات في الوقت الحقيقي
+    let unsubscribe = null
+    function startAdminListener(){
+      const q = query(collection(db,'orders'), orderBy('createdAt','desc'))
+      unsubscribe = onSnapshot(q, (snap)=>{
+        ordersList.innerHTML = ''
+        if (snap.empty) ordersList.textContent = 'لا توجد طلبات حالياً.'
+        snap.forEach(docSnap => {
+          const data = docSnap.data()
+          const id = docSnap.id
+          const created = data.createdAt ? new Date(data.createdAt.seconds*1000).toLocaleString() : '-'
+          const div = document.createElement('div')
+          div.className = 'order'
+          div.innerHTML = `
+            <div><strong>${data.name}</strong> — <span class="status">${data.status}</span></div>
+            <div>${data.drink} • ${data.size} • ${data.sugar}</div>
+            <div>${data.notes || ''}</div>
+            <div style="margin-top:6px">${created}</div>
+            <div style="margin-top:6px">
+              <button data-id="${id}" data-action="prepare">قيد التحضير</button>
+              <button data-id="${id}" data-action="delivered">تم التوصيل</button>
+              <button data-id="${id}" data-action="delete">حذف</button>
+            </div>
+          `
+
+          ordersList.appendChild(div)
+        })
+
+        // ربط أزرار التحديث
+        ordersList.querySelectorAll('button').forEach(b=>{
+          b.addEventListener('click', async (ev)=>{
+            const id = ev.target.dataset.id
+            const action = ev.target.dataset.action
+            const docRef = doc(db,'orders',id)
+            try{
+              if(action==='delete'){
+                await updateDoc(docRef,{status:'محذوف'})
+              } else if(action==='delivered'){
+                await updateDoc(docRef,{status:'تم التوصيل'})
+              } else if(action==='prepare'){
+                await updateDoc(docRef,{status:'قيد التحضير'})
+              }
+            }catch(e){console.error(e)}
+          })
+        })
+
+      }, (err)=>{
+        ordersList.textContent = 'فشل في جلب الطلبات. تأكد من إعداد Firebase.'
+        console.error(err)
+      })
+    }
+
+  </script></body>
+</html>
